@@ -1,0 +1,31 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "小度智能设备",
+        "description": "填写教程：",
+        "data": {
+          "BAIDUID_COOKIE": "小度网站COOKIE"
+        }
+      },
+      "home": {
+        "title": "小度智能设备",
+        "description": "选择小度App中的家庭名称/ID(单选)"
+      },
+      "device": {
+        "title": "小度智能设备",
+        "description": "选择需要添加的设备(可多选)"
+      }
+    },
+    "error": {
+      "cannot_connect": "无法连接到设备",
+      "invalid_auth": "登录失败",
+      "unknown": "发生未知错误",
+      "Unknown error occurred": "发生未知错误",
+      "cannot_xiaodu": "连接到小度服务器错误",
+      "params.invalid": "输入错误"
+    },
+    "title": "小度智能设备"
+  }
+}
+  
