@@ -1,5 +1,3 @@
-import logging
-
 import aiohttp
 
 HOST = 'https://xiaodu.baidu.com'
@@ -8,12 +6,16 @@ import logging
 _LOGGER = logging.getLogger(__name__)
 
 
-class XiaoDu:
-    def __init__(self, cookie: str, session: aiohttp.ClientSession) -> None:
+class XiaoDuAPI:
+    def __init__(self, cookie: str, session: aiohttp.ClientSession, houseId: str = None, applianceId: str = None,
+                 applianceTypes: list = []) -> None:
         self.cookie = cookie
         # self._device_dict = None
         self.Session = session
         self.Header = self._common_header()
+        self.applianceId = applianceId
+        self.houseId = houseId
+        self.applianceTypes = applianceTypes
         # self.Session = session
         # self.Session.verify = False
         # logging.captureWarnings(True)
@@ -49,14 +51,14 @@ class XiaoDu:
             logging.error("请求小度出错")
             return []
 
-    async def switch_on(self, applianceId):
-        return await self.switch_toggle(applianceId, True)
+    async def switch_on(self):
+        return await self.switch_toggle(True)
 
-    async def switch_off(self, applianceId):
-        return await self.switch_toggle(applianceId, False)
+    async def switch_off(self):
+        return await self.switch_toggle(False)
 
-    async def switch_status(self, applianceId):
-        detail = await self.get_detail(applianceId)
+    async def switch_status(self):
+        detail = await self.get_detail()
         # if 'attributes' in detail['appliance']:
         #     # 是插座，查找插座的状态
         #     turnOnState = str(detail['appliance']['attributes']['turnOnState']['value']).lower()
@@ -74,11 +76,12 @@ class XiaoDu:
             return True
         return False
 
-    async def get_detail(self, applianceId):
+    async def get_detail(self):
         api = "/saiya/smarthome/appliancedetails"
-        submit = {"applianceId": applianceId, "version": 2, "from": "h5"}
+        submit = {"applianceId": self.applianceId, "version": 2, "from": "h5"}
         try:
-            res = await self.Session.get(HOST + api, headers=self.Header, json=submit)
+            res = await self.Session.get(HOST + api, headers=self.Header, json=submit,
+                                         cookies={"HOUSE_ID": self.houseId})
             # logging.info("request \n %s \n %s \n %s \t %s", HOST + api, '', res.status_code, res.json())
 
             json = await res.json()
@@ -89,7 +92,25 @@ class XiaoDu:
             logging.error("请求小度出错")
             return {}
 
-    async def switch_toggle(self, applianceId: str, method: bool):
+    async def get_details(self, houseId: str, applianceIds: list):
+        api = "/saiya/smarthome/appliance"
+        submit = {"enableCancelToken": True, "method": "GET_APPLIANCES_BY_ID",
+                  "params": {"from": "h5_control", "applianceIdList": applianceIds, "clientCuidList": [],
+                             "enablecache": True}}
+        try:
+            res = await self.Session.get(HOST + api, headers=self.Header, json=submit, cookies={"HOUSE_ID": houseId})
+            # logging.info("request \n %s \n %s \n %s \t %s", HOST + api, '', res.status_code, res.json())
+
+            json = await res.json()
+            if json['status'] == 0:
+                return json['data']
+            return {}
+        except Exception as e:
+            logging.error("请求小度出错")
+            logging.error(str(e))
+            return {}
+
+    async def switch_toggle(self, method: bool):
         methodS = "ON"
         methodS2 = "TurnOnRequest"
         if not method:
@@ -98,10 +119,10 @@ class XiaoDu:
         api = "/saiya/smarthome/directivesend?from=h5_control"
         submit = {
             "header": {"namespace": "DuerOS.ConnectedHome.Control", "name": methodS2, "payloadVersion": 3},
-            "payload": {"applianceId": applianceId,
+            "payload": {"applianceId": self.applianceId,
                         "parameters": {"attribute": "turnOnState", "attributeValue": methodS,
                                        "proxyConnectStatus": False},
-                        "appliance": {"applianceId": [applianceId]}, "turnOnState": {"value": methodS}}}
+                        "appliance": {"applianceId": [self.applianceId]}, "turnOnState": {"value": methodS}}}
         try:
             res = await self.Session.get(HOST + api, headers=self.Header, json=submit)
             # logging.info("request \n %s \n %s \n %s \t %s", HOST + api, '', res.status_code, res.json())
@@ -174,27 +195,26 @@ class XiaoDu:
             "host": "xiaodu.baidu.com",
         }
 
-
-class XiaoDuAC:
-    def __init__(self, applianceId: str, cookie: str, session: aiohttp.ClientSession):
-        self.applianceId = applianceId
-        self.cookie = cookie
-        self.Session = session
-        self.XiaoDuApi = XiaoDu(cookie, session)
-
-    async def turn_on(self):
-        return await self.XiaoDuApi.switch_on(self.applianceId)
-
-    async def turn_off(self):
-        return await self.XiaoDuApi.switch_off(self.applianceId)
-
-    async def switch_status(self):
-        return await self.XiaoDuApi.switch_status(self.applianceId)
-
-    async def get_name(self):
-        detail = await self.XiaoDuApi.get_detail(self.applianceId)
-        name = detail['appliance']['friendlyName']
-        return name
-
-    async def get_detail(self):
-        return await self.XiaoDuApi.get_detail(self.applianceId)
+# class XiaoDuAC:
+#     def __init__(self, applianceId: str, cookie: str, session: aiohttp.ClientSession):
+#         self.applianceId = applianceId
+#         self.cookie = cookie
+#         self.Session = session
+#         self.XiaoDuApi = XiaoDu(cookie, session)
+#
+#     async def turn_on(self):
+#         return await self.XiaoDuApi.switch_on(self.applianceId)
+#
+#     async def turn_off(self):
+#         return await self.XiaoDuApi.switch_off(self.applianceId)
+#
+#     async def switch_status(self):
+#         return await self.XiaoDuApi.switch_status(self.applianceId)
+#
+#     async def get_name(self):
+#         detail = await self.XiaoDuApi.get_detail(self.applianceId)
+#         name = detail['appliance']['friendlyName']
+#         return name
+#
+#     async def get_detail(self):
+#         return await self.XiaoDuApi.get_detail(self.applianceId)
