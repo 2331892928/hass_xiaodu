@@ -124,7 +124,8 @@ class XiaoDuAPI:
                                        "proxyConnectStatus": False},
                         "appliance": {"applianceId": [self.applianceId]}, "turnOnState": {"value": methodS}}}
         try:
-            res = await self.Session.get(HOST + api, headers=self.Header, json=submit)
+            res = await self.Session.get(HOST + api, headers=self.Header, json=submit,
+                                         cookies={"HOUSE_ID": self.houseId})
             # logging.info("request \n %s \n %s \n %s \t %s", HOST + api, '', res.status_code, res.json())
 
             json = await res.json()
@@ -137,12 +138,80 @@ class XiaoDuAPI:
             logging.error("请求小度出错")
             return [False, "请求小度出错"]
 
-    # def exec_scene(self, unique_id):
-    #     api = '/saiya/smarthome/unified'
-    #     param = {"method": "triggerScene", "params": {"sceneId": unique_id}}
-    #     response = self.post(HOST + api, headers=self._common_header(), json=param)
-    #     # logging.info("request \n %s \n %s \n %s \t %s", HOST + api, param, response.status_code, response.json())
-    #     return response.status_code == 200
+    async def brightness(self, attributeValue: int):
+        """
+        控制亮度
+        attributeValue 1-100百分比
+        :return:
+        """
+        api = "/saiya/smarthome/directivesend?from=h5_control"
+        submit = {"header": {"namespace": "DuerOS.ConnectedHome.Control", "name": "SetBrightnessPercentageRequest",
+                             "payloadVersion": 3}, "payload": {"applianceId": self.applianceId,
+                                                               "parameters": {"attribute": "brightness",
+                                                                              "attributeValue": attributeValue,
+                                                                              "proxyConnectStatus": False},
+                                                               "appliance": {"applianceId": [self.applianceId]},
+                                                               "brightness": {"value": attributeValue}}}
+        try:
+            res = await self.Session.get(HOST + api, headers=self.Header, json=submit,
+                                         cookies={"HOUSE_ID": self.houseId})
+            json = await res.json()
+            if json['status'] == 0:
+                return [True, None]
+            if json['msg'] == 'not login':
+                return [False, "cookie失效喔，请及时更新"]
+            return [False, json['msg']]
+        except Exception as e:
+            logging.error("请求小度出错")
+            return [False, "请求小度出错"]
+
+    async def colorTemperatureInKelvin(self, attributeValue: int):
+        """
+        控制色温
+        attributeValue 1-100百分比
+        :return:
+        """
+        api = "/saiya/smarthome/directivesend?from=h5_control"
+        submit = {"header": {"namespace": "DuerOS.ConnectedHome.Control", "name": "SetColorTemperatureRequest",
+                             "payloadVersion": 3}, "payload": {"applianceId": self.applianceId,
+                                                               "parameters": {"attribute": "colorTemperatureInKelvin",
+                                                                              "attributeValue": attributeValue,
+                                                                              "proxyConnectStatus": False},
+                                                               "appliance": {"applianceId": [self.applianceId]},
+                                                               "colorTemperatureInKelvin": attributeValue}}
+
+        try:
+            res = await self.Session.get(HOST + api, headers=self.Header, json=submit,
+                                         cookies={"HOUSE_ID": self.houseId})
+            json = await res.json()
+            if json['status'] == 0:
+                return [True, None]
+            if json['msg'] == 'not login':
+                return [False, "cookie失效喔，请及时更新"]
+            return [False, json['msg']]
+        except Exception as e:
+            logging.error("请求小度出错")
+            return [False, "请求小度出错"]
+
+    async def light_set_mode(self, mode: str):
+        api = "/saiya/smarthome/directivesend?from=h5_control"
+        submit = {
+            "header": {"namespace": "DuerOS.ConnectedHome.Control", "name": "SetModeRequest", "payloadVersion": 3},
+            "payload": {"applianceId": self.applianceId,
+                        "parameters": {"attribute": "mode", "attributeValue": mode, "proxyConnectStatus": False},
+                        "appliance": {"applianceId": [self.applianceId]}, "mode": {"value": mode}}}
+        try:
+            res = await self.Session.get(HOST + api, headers=self.Header, json=submit,
+                                         cookies={"HOUSE_ID": self.houseId})
+            json = await res.json()
+            if json['status'] == 0:
+                return [True, None]
+            if json['msg'] == 'not login':
+                return [False, "cookie失效喔，请及时更新"]
+            return [False, json['msg']]
+        except Exception as e:
+            logging.error("请求小度出错")
+            return [False, "请求小度出错"]
 
     async def get_home_id_list(self):
         api = "/saiya/smarthome/multihouse"

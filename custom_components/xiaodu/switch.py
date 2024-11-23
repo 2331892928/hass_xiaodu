@@ -35,6 +35,7 @@ class XiaoduSwitch(SwitchEntity):
         self._api = api
         self._attr_unique_id = f"{api.applianceId}_switch"
         self._is_on = if_on
+        # self._attr_is_on = if_on
         self._name = name
         self._group_name = botName
         if if_on:
@@ -65,12 +66,6 @@ class XiaoduSwitch(SwitchEntity):
         self._attr_icon = "mdi:toggle-switch-variant"
         await self.async_update()
         self.async_schedule_update_ha_state(True)
-        # 如果状态错误 回退
-        if not flag:
-            self._is_on = False
-            self._attr_icon = "mdi:toggle-switch-variant-off"
-            await self.async_update()
-            self.async_schedule_update_ha_state(True)
 
     async def async_turn_off(self):
         flag = await self._api.switch_off()
@@ -78,12 +73,6 @@ class XiaoduSwitch(SwitchEntity):
         self._attr_icon = "mdi:toggle-switch-variant-off"
         await self.async_update()
         self.async_schedule_update_ha_state(True)
-        # 如果状态错误 回退
-        if not flag:
-            self._is_on = True
-            self._attr_icon = "mdi:toggle-switch-variant"
-            await self.async_update()
-            self.async_schedule_update_ha_state(True)
 
     async def async_update(self):
         self._is_on = await self._api.switch_status()
