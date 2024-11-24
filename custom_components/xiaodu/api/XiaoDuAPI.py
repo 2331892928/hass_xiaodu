@@ -116,27 +116,13 @@ class XiaoDuAPI:
         if not method:
             methodS = "OFF"
             methodS2 = "TurnOffRequest"
-        api = "/saiya/smarthome/directivesend?from=h5_control"
         submit = {
             "header": {"namespace": "DuerOS.ConnectedHome.Control", "name": methodS2, "payloadVersion": 3},
             "payload": {"applianceId": self.applianceId,
                         "parameters": {"attribute": "turnOnState", "attributeValue": methodS,
                                        "proxyConnectStatus": False},
                         "appliance": {"applianceId": [self.applianceId]}, "turnOnState": {"value": methodS}}}
-        try:
-            res = await self.Session.get(HOST + api, headers=self.Header, json=submit,
-                                         cookies={"HOUSE_ID": self.houseId})
-            # logging.info("request \n %s \n %s \n %s \t %s", HOST + api, '', res.status_code, res.json())
-
-            json = await res.json()
-            if json['status'] == 0:
-                return [True, None]
-            if json['msg'] == 'not login':
-                return [False, "cookie失效喔，请及时更新"]
-            return [False, json['msg']]
-        except Exception as e:
-            logging.error("请求小度出错")
-            return [False, "请求小度出错"]
+        return await self.send_command(submit)
 
     async def brightness(self, attributeValue: int):
         """
@@ -144,7 +130,6 @@ class XiaoDuAPI:
         attributeValue 1-100百分比
         :return:
         """
-        api = "/saiya/smarthome/directivesend?from=h5_control"
         submit = {"header": {"namespace": "DuerOS.ConnectedHome.Control", "name": "SetBrightnessPercentageRequest",
                              "payloadVersion": 3}, "payload": {"applianceId": self.applianceId,
                                                                "parameters": {"attribute": "brightness",
@@ -152,18 +137,7 @@ class XiaoDuAPI:
                                                                               "proxyConnectStatus": False},
                                                                "appliance": {"applianceId": [self.applianceId]},
                                                                "brightness": {"value": attributeValue}}}
-        try:
-            res = await self.Session.get(HOST + api, headers=self.Header, json=submit,
-                                         cookies={"HOUSE_ID": self.houseId})
-            json = await res.json()
-            if json['status'] == 0:
-                return [True, None]
-            if json['msg'] == 'not login':
-                return [False, "cookie失效喔，请及时更新"]
-            return [False, json['msg']]
-        except Exception as e:
-            logging.error("请求小度出错")
-            return [False, "请求小度出错"]
+        return await self.send_command(submit)
 
     async def colorTemperatureInKelvin(self, attributeValue: int):
         """
@@ -171,7 +145,6 @@ class XiaoDuAPI:
         attributeValue 1-100百分比
         :return:
         """
-        api = "/saiya/smarthome/directivesend?from=h5_control"
         submit = {"header": {"namespace": "DuerOS.ConnectedHome.Control", "name": "SetColorTemperatureRequest",
                              "payloadVersion": 3}, "payload": {"applianceId": self.applianceId,
                                                                "parameters": {"attribute": "colorTemperatureInKelvin",
@@ -180,38 +153,34 @@ class XiaoDuAPI:
                                                                "appliance": {"applianceId": [self.applianceId]},
                                                                "colorTemperatureInKelvin": attributeValue}}
 
-        try:
-            res = await self.Session.get(HOST + api, headers=self.Header, json=submit,
-                                         cookies={"HOUSE_ID": self.houseId})
-            json = await res.json()
-            if json['status'] == 0:
-                return [True, None]
-            if json['msg'] == 'not login':
-                return [False, "cookie失效喔，请及时更新"]
-            return [False, json['msg']]
-        except Exception as e:
-            logging.error("请求小度出错")
-            return [False, "请求小度出错"]
+        return await self.send_command(submit)
 
     async def light_set_mode(self, mode: str):
-        api = "/saiya/smarthome/directivesend?from=h5_control"
         submit = {
             "header": {"namespace": "DuerOS.ConnectedHome.Control", "name": "SetModeRequest", "payloadVersion": 3},
             "payload": {"applianceId": self.applianceId,
                         "parameters": {"attribute": "mode", "attributeValue": mode, "proxyConnectStatus": False},
                         "appliance": {"applianceId": [self.applianceId]}, "mode": {"value": mode}}}
-        try:
-            res = await self.Session.get(HOST + api, headers=self.Header, json=submit,
-                                         cookies={"HOUSE_ID": self.houseId})
-            json = await res.json()
-            if json['status'] == 0:
-                return [True, None]
-            if json['msg'] == 'not login':
-                return [False, "cookie失效喔，请及时更新"]
-            return [False, json['msg']]
-        except Exception as e:
-            logging.error("请求小度出错")
-            return [False, "请求小度出错"]
+        return await self.send_command(submit)
+
+    async def set_curtain_stop(self):
+        submit = {"header": {"namespace": "DuerOS.ConnectedHome.Control", "name": "PauseRequest", "payloadVersion": 3},
+                  "payload": {"applianceId": self.applianceId, "parameters": {"proxyConnectStatus": False},
+                              "appliance": {"applianceId": [self.applianceId]}}}
+        return await self.send_command(submit)
+
+    async def set_curtain_open(self):
+        submit = {"header": {"namespace": "DuerOS.ConnectedHome.Control", "name": "TurnOnRequest", "payloadVersion": 3},
+                  "payload": {"applianceId": self.applianceId, "parameters": {"proxyConnectStatus": False},
+                              "appliance": {"applianceId": [self.applianceId]}}}
+        return await self.send_command(submit)
+
+    async def set_curtain_close(self):
+        submit = {
+            "header": {"namespace": "DuerOS.ConnectedHome.Control", "name": "TurnOffRequest", "payloadVersion": 3},
+            "payload": {"applianceId": self.applianceId, "parameters": {"proxyConnectStatus": False},
+                        "appliance": {"applianceId": [self.applianceId]}}}
+        return await self.send_command(submit)
 
     async def get_home_id_list(self):
         api = "/saiya/smarthome/multihouse"
@@ -254,6 +223,21 @@ class XiaoDuAPI:
         for i in devices:
             device_dict[i['applianceId']] = i['friendlyName']
         return device_dict
+
+    async def send_command(self, submit: dict):
+        api = "/saiya/smarthome/directivesend?from=h5_control"
+        try:
+            res = await self.Session.get(HOST + api, headers=self.Header, json=submit,
+                                         cookies={"HOUSE_ID": self.houseId})
+            json = await res.json()
+            if json['status'] == 0:
+                return [True, None]
+            if json['msg'] == 'not login':
+                return [False, "cookie失效喔，请及时更新"]
+            return [False, json['msg']]
+        except Exception as e:
+            logging.error("请求小度出错")
+            return [False, "请求小度出错"]
 
     def _common_header(self):
         return {

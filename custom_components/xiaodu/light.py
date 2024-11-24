@@ -1,11 +1,8 @@
 import logging
-from typing import Literal
 
 from homeassistant import core
 from homeassistant.components.light import LightEntity, ColorMode, ATTR_BRIGHTNESS, ATTR_COLOR_TEMP, \
     ATTR_COLOR_TEMP_KELVIN, LightEntityFeature, ATTR_EFFECT
-from homeassistant.helpers.typing import UndefinedType
-from homeassistant.util.color import value_to_brightness
 from . import XiaoDuAPI, ApplianceTypes
 
 from .const import DOMAIN
@@ -19,7 +16,7 @@ async def async_setup_entry(hass: core.HomeAssistant, config_entry, async_add_en
     A = ApplianceTypes()
     for device_id in api:
         aapi: XiaoDuAPI = api[device_id]
-        # 判断是否是switch设备
+        # 判断是否是light设备
         applianceTypes = aapi.applianceTypes
         if not A.is_light(applianceTypes):
             continue
@@ -74,7 +71,7 @@ class XiaoDuLight(LightEntity):
             self._brightness = round(brightness / 100 * 255)
         if 'mode' in detail['stateSetting']:
             self._attr_supported_features = LightEntityFeature(
-                LightEntityFeature.EFFECT | LightEntityFeature.FLASH | LightEntityFeature.TRANSITION)
+                LightEntityFeature.EFFECT)
             effect_list = []
             valueRangeMap = detail['stateSetting']['mode']['valueRangeMap']
             for i in valueRangeMap:
@@ -128,14 +125,14 @@ class XiaoDuLight(LightEntity):
             flag = await self._api.light_set_mode(mode)
         self._is_on = True
         self._attr_icon = "mdi:lightbulb"
-        await self.async_update()
+        # await self.async_update()
         self.async_schedule_update_ha_state(True)
 
     async def async_turn_off(self, **kwargs):
         flag = await self._api.switch_off()
         self._is_on = False
         self._attr_icon = "mdi:lightbulb-off"
-        await self.async_update()
+        # await self.async_update()
         self.async_schedule_update_ha_state(True)
         # 如果状态错误 回退
         if not flag:

@@ -64,14 +64,14 @@ class XiaoduSwitch(SwitchEntity):
         flag = await self._api.switch_on()
         self._is_on = True
         self._attr_icon = "mdi:toggle-switch-variant"
-        await self.async_update()
+        # await self.async_update()
         self.async_schedule_update_ha_state(True)
 
     async def async_turn_off(self):
         flag = await self._api.switch_off()
         self._is_on = False
         self._attr_icon = "mdi:toggle-switch-variant-off"
-        await self.async_update()
+        # await self.async_update()
         self.async_schedule_update_ha_state(True)
 
     async def async_update(self):
