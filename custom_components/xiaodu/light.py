@@ -43,7 +43,7 @@ class XiaoDuLight(LightEntity):
         self._api = api
         self._attr_unique_id = f"{api.applianceId}_light"
         # self._attr_is_on = if_on
-        self._is_on = if_on
+        self._attr_is_on = if_on
         self._attr_name = name
         self._group_name = detail['groupName']
         self.pColorMode = None
@@ -60,15 +60,15 @@ class XiaoDuLight(LightEntity):
             self._attr_supported_color_modes = {ColorMode.COLOR_TEMP}
             self._attr_color_mode = ColorMode.COLOR_TEMP
             self.pColorMode = ColorMode.COLOR_TEMP
-            brightness = detail['stateSetting']['brightness']['value']
-            self._brightness = round(brightness / 100 * 255)
+            # brightness = detail['stateSetting']['brightness']['value']
+            # self._brightness = round(brightness / 100 * 255)
             # 没有色温 只有亮度
         if 'brightness' in detail['stateSetting'] and 'colorTemperatureInKelvin' not in detail['stateSetting']:
             self._attr_supported_color_modes = {ColorMode.BRIGHTNESS}
             self._attr_color_mode = ColorMode.BRIGHTNESS
             self.pColorMode = ColorMode.BRIGHTNESS
-            brightness = detail['stateSetting']['brightness']['value']
-            self._brightness = round(brightness / 100 * 255)
+            # brightness = detail['stateSetting']['brightness']['value']
+            # self._brightness = round(brightness / 100 * 255)
         if 'mode' in detail['stateSetting']:
             self._attr_supported_features = LightEntityFeature(
                 LightEntityFeature.EFFECT)
@@ -77,21 +77,12 @@ class XiaoDuLight(LightEntity):
             for i in valueRangeMap:
                 effect_list.append(valueRangeMap[i])
             self._attr_effect_list = effect_list
-            if 'value' not in detail['stateSetting']['mode']:
-                mode = "NIGHT_UP"
-            else:
-                mode = detail['stateSetting']['mode']['value']
-            self._attr_effect = valueRangeMap[mode]
 
         # 最基础的只有开和关 没有模式 色温 亮度控制
         if 'mode' not in detail['stateSetting'] and 'brightness' not in detail['stateSetting'] and 'colorTemperatureInKelvin' not in detail['stateSetting']:
             self._attr_supported_color_modes = {ColorMode.ONOFF}
             self._attr_color_mode = ColorMode.ONOFF
             self.pColorMode = ColorMode.ONOFF
-
-    @property
-    def brightness(self):
-        return self._brightness
 
     @property
     def color_temp_kelvin(self) -> int | None:
@@ -145,19 +136,25 @@ class XiaoDuLight(LightEntity):
             self.async_schedule_update_ha_state(True)
 
     async def async_update(self):
-        self._is_on = await self._api.switch_status()
+        # self._is_on = await self._api.switch_status()
         detail = await self._api.get_detail()
         detail = detail['appliance']
+        turnOnState = str(detail['stateSetting']['turnOnState']['value']).lower()
+        if turnOnState == "on":
+            turnOnState = True
+        else:
+            turnOnState = False
+        self._attr_is_on = turnOnState
         self.effectList = detail['stateSetting']['mode']['valueRangeMap']
         if self.pColorMode == ColorMode.BRIGHTNESS:
             # 更新亮度
             brightness = detail['stateSetting']['brightness']['value']
-            self._brightness = round(brightness / 100 * 255)
+            self._attr_brightness = round(brightness / 100 * 255)
             # self._attr_brightness = brightness
         elif self.pColorMode == ColorMode.COLOR_TEMP:
             # 更新亮度
             brightness = detail['stateSetting']['brightness']['value']
-            self._brightness = round(brightness / 100 * 255)
+            self._attr_brightness = round(brightness / 100 * 255)
             # 更新色温和色温范围 得到的色温是比例
             colorTemperatureInKelvin = detail['stateSetting']['colorTemperatureInKelvin']['value']
             # 换算色温比例
@@ -173,4 +170,16 @@ class XiaoDuLight(LightEntity):
             self._attr_color_temp_kelvin = colorTemperatureInKelvin
             self._color_temp_kelvin = colorTemperatureInKelvin
             # 模式
-            # self._attr_effect_list = ['test']
+            if 'mode' in detail['stateSetting']:
+                self._attr_supported_features = LightEntityFeature(
+                    LightEntityFeature.EFFECT)
+                effect_list = []
+                valueRangeMap = detail['stateSetting']['mode']['valueRangeMap']
+                for i in valueRangeMap:
+                    effect_list.append(valueRangeMap[i])
+                self._attr_effect_list = effect_list
+                if 'value' not in detail['stateSetting']['mode']:
+                    mode = "NIGHT_UP"
+                else:
+                    mode = detail['stateSetting']['mode']['value']
+                self._attr_effect = valueRangeMap[mode]
