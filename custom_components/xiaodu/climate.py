@@ -4,7 +4,7 @@ from homeassistant import core
 from . import ApplianceTypes, XiaoDuAPI
 from .const import DOMAIN
 from homeassistant.components.climate import ClimateEntity, ClimateEntityFeature, FAN_LOW, FAN_MEDIUM, FAN_HIGH, \
-    HVACMode
+    HVACMode, FAN_MIDDLE, FAN_FOCUS, FAN_DIFFUSE
 from homeassistant.const import UnitOfTemperature, ATTR_TEMPERATURE
 
 _LOGGER = logging.getLogger(__name__)
@@ -45,7 +45,7 @@ class XiaoDuClimate(ClimateEntity):
         )
         # 根据平台的空调不同 有5档风的三挡的 兼容最低版本 统一 低中高
         self._attr_fan_modes = [
-            FAN_LOW, FAN_MEDIUM, FAN_HIGH]
+            FAN_LOW, FAN_MEDIUM, FAN_HIGH, FAN_MIDDLE, FAN_FOCUS, FAN_DIFFUSE]
         # 模式 支持 制热 制冷 松风 自动 除湿
         self._attr_hvac_modes = [
             HVACMode.COOL, HVACMode.HEAT, HVACMode.DRY, HVACMode.FAN_ONLY, HVACMode.OFF, HVACMode.AUTO]
@@ -64,13 +64,13 @@ class XiaoDuClimate(ClimateEntity):
             1: FAN_LOW,
             2: FAN_MEDIUM,
             3: FAN_HIGH,
-            4: FAN_HIGH,
-            5: FAN_HIGH,
-            6: FAN_HIGH,
-            7: FAN_HIGH,
-            8: FAN_HIGH,
-            9: FAN_HIGH,
-            10: FAN_HIGH
+            4: FAN_MIDDLE,
+            5: FAN_FOCUS,
+            6: FAN_DIFFUSE,
+            7: FAN_DIFFUSE,
+            8: FAN_DIFFUSE,
+            9: FAN_DIFFUSE,
+            10: FAN_DIFFUSE
         }
         self._ac_mode_lookup = {
             "dry": "dehumidification",
