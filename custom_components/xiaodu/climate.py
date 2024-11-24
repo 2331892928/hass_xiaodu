@@ -133,14 +133,22 @@ class XiaoDuClimate(ClimateEntity):
     async def async_update(self):
         self.detail = await self._api.get_detail()
         detail = self.detail['appliance']
-        mode = detail['stateSetting']['mode']['value']
-        fanSpeed = detail['stateSetting']['fanSpeed']['value']
-        temperature = detail['stateSetting']['temperature']['value']
+        stateSetting = detail['stateSetting']
+        if 'fanSpeed' not in stateSetting:
+            fanSpeed = FAN_MEDIUM
+        else:
+            fanSpeed = stateSetting['fanSpeed']['value']
+        if 'temperature' not in stateSetting:
+            temperature = 26
+        else:
+            temperature = stateSetting['temperature']['value']
+        if 'mode' not in stateSetting:
+            mode = 'cool'
+        else:
+            mode = stateSetting['mode']['value']
         turnOnState = detail['stateSetting']['turnOnState']['value']
         if turnOnState.lower() == 'on':
-            # 如果没有这个值 要么设备不支持 要么获取失败
-            if mode is not None:
-                self._attr_hvac_mode = self._ac_mode_lookup2.get(str(mode).lower(), str(mode).lower())
+            self._attr_hvac_mode = self._ac_mode_lookup2.get(str(mode).lower(), str(mode).lower())
         else:
             self._attr_hvac_mode = HVACMode.OFF
 

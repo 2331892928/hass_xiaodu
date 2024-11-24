@@ -59,7 +59,7 @@ class XiaoDuCover(CoverEntity):
 
     async def async_update(self):
         if_on = await self._api.switch_status()
-        self._attr_is_closed = if_on
+        self._attr_is_closed = not if_on
         if if_on:
             self._attr_icon = "mdi:curtains"
         else:

@@ -77,7 +77,11 @@ class XiaoDuLight(LightEntity):
             for i in valueRangeMap:
                 effect_list.append(valueRangeMap[i])
             self._attr_effect_list = effect_list
-            self._attr_effect = valueRangeMap[detail['stateSetting']['mode']['value']]
+            if 'value' not in detail['stateSetting']['mode']:
+                mode = "NIGHT_UP"
+            else:
+                mode = detail['stateSetting']['mode']['value']
+            self._attr_effect = valueRangeMap[mode]
 
         # 最基础的只有开和关 没有模式 色温 亮度控制
         if 'mode' not in detail['stateSetting'] and 'brightness' not in detail['stateSetting'] and 'colorTemperatureInKelvin' not in detail['stateSetting']:
