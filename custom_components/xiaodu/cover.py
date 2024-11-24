@@ -35,7 +35,7 @@ class XiaoDuCover(CoverEntity):
         self._attr_unique_id = f"{api.applianceId}_cover"
         self._attr_supported_features = CoverEntityFeature(CoverEntityFeature.OPEN | CoverEntityFeature.CLOSE |
                                                            CoverEntityFeature.STOP)
-        self._attr_is_closed = if_on
+        self._attr_is_closed = not if_on
         if if_on:
             self._attr_icon = "mdi:curtains"
         else:
