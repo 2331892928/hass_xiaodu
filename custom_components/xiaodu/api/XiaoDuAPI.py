@@ -182,6 +182,61 @@ class XiaoDuAPI:
                         "appliance": {"applianceId": [self.applianceId]}}}
         return await self.send_command(submit)
 
+    async def set_ac_mode(self, mode: str):
+        """
+
+        :param mode: 模式 大小写均可 cool heat fan auto DEHUMIDIFICATION
+        :return:
+        """
+        submit = {
+            "header": {"namespace": "DuerOS.ConnectedHome.Control", "name": "SetModeRequest", "payloadVersion": 1},
+            "payload": {"mode": {"value": mode.upper()}, "applianceId": self.applianceId,
+                        "appliance": {"applianceId": [self.applianceId]},
+                        "parameters": {"proxyConnectStatus": False}}}
+        return await self.send_command(submit)
+
+    async def set_ac_off(self):
+        submit = {
+            "header": {"namespace": "DuerOS.ConnectedHome.Control", "name": "TurnOffRequest", "payloadVersion": 1},
+            "payload": {"applianceId": self.applianceId, "appliance": {"applianceId": [self.applianceId]},
+                        "parameters": {"proxyConnectStatus": False}}}
+        return await self.send_command(submit)
+
+    async def set_ac_on(self):
+        submit = {
+            "header": {"namespace": "DuerOS.ConnectedHome.Control", "name": "TurnOnRequest", "payloadVersion": 1},
+            "payload": {"applianceId": self.applianceId, "appliance": {"applianceId": [self.applianceId]},
+                        "parameters": {"proxyConnectStatus": False}}}
+        return await self.send_command(submit)
+
+    async def set_ac_temperature_jia(self):
+        submit = {"header": {"namespace": "DuerOS.ConnectedHome.Control", "name": "IncrementTemperatureRequest",
+                             "payloadVersion": 1}, "payload": {"applianceId": self.applianceId,
+                                                               "appliance": {"applianceId": [self.applianceId]},
+                                                               "parameters": {"proxyConnectStatus": False}}}
+        return await self.send_command(submit)
+
+    async def set_ac_temperature_jian(self):
+        submit = {"header": {"namespace": "DuerOS.ConnectedHome.Control", "name": "DecrementTemperatureRequest",
+                             "payloadVersion": 1}, "payload": {"applianceId": self.applianceId,
+                                                               "appliance": {"applianceId": [self.applianceId]},
+                                                               "parameters": {"proxyConnectStatus": False}}}
+        return await self.send_command(submit)
+
+    async def set_ac_fan_jia(self):
+        submit = {"header": {"namespace": "DuerOS.ConnectedHome.Control", "name": "IncrementFanSpeedRequest",
+                             "payloadVersion": 1}, "payload": {"applianceId": self.applianceId,
+                                                               "appliance": {"applianceId": [self.applianceId]},
+                                                               "parameters": {"proxyConnectStatus": False}}}
+        return await self.send_command(submit)
+
+    async def set_ac_fan_jian(self):
+        submit = {"header": {"namespace": "DuerOS.ConnectedHome.Control", "name": "DecrementFanSpeedRequest",
+                             "payloadVersion": 1},
+                  "payload": {"applianceId": self.applianceId, "appliance": {"applianceId": [self.applianceId]},
+                              "parameters": {"proxyConnectStatus": False}}}
+        return await self.send_command(submit)
+
     async def get_home_id_list(self):
         api = "/saiya/smarthome/multihouse"
         submit = {"method": "HOUSE_LIST"}

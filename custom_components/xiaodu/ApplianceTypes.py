@@ -11,6 +11,9 @@ class ApplianceTypes:
     def COVER(self):
         return ['CURTAIN']
 
+    def CLIMATE(self):
+        return ['AIR_CONDITION']
+
     def is_switch(self, applianceTypes):
         A = ApplianceTypes()
         switch = A.SWITCH()
@@ -35,3 +38,10 @@ class ApplianceTypes:
                 return True
         return False
 
+    def is_climate(self, applianceTypes):
+        A = ApplianceTypes()
+        switch = A.CLIMATE()
+        for i in applianceTypes:
+            if i in switch:
+                return True
+        return False

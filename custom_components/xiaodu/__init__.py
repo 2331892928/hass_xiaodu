@@ -39,7 +39,8 @@ async def async_setup_entry(hass: core.HomeAssistant, entry: config_entries.Conf
     PLATFORMS = [
         Platform.LIGHT,
         Platform.SWITCH,
-        Platform.COVER
+        Platform.COVER,
+        Platform.CLIMATE
     ]
     await hass.config_entries.async_forward_entry_setups(
         entry, PLATFORMS

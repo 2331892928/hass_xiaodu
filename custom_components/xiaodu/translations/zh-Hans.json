@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "title": "小度智能设备",
-        "description": "填写教程：",
+        "description": "填写教程：https://blog.ymypay.cn/index.php/2024/11/22/homeassistant_xiaodu_plugin/#htoc-",
         "data": {
           "BAIDUID_COOKIE": "小度网站COOKIE"
         }

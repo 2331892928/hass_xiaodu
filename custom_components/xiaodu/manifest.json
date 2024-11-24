@@ -2,7 +2,7 @@
   "codeowners": ["@AMEN"],
   "config_flow": true,
   "dependencies": [],
-  "documentation": "https://github.com/user/my_component/",
+  "documentation": "https://github.com/2331892928/hass_xiaodu",
   "domain": "baidu",
   "iot_class": "cloud_polling",
   "name": "xiaodu",
