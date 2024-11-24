@@ -21,6 +21,8 @@ async def async_setup_entry(hass: core.HomeAssistant, config_entry, async_add_en
         if not A.is_light(applianceTypes):
             continue
         detail = await aapi.get_detail()
+        if detail == []:
+            continue
         name = detail['appliance']['friendlyName']
         if_onS = str(detail['appliance']['stateSetting']['turnOnState']['value']).lower()
         if if_onS == "on":
@@ -80,6 +82,10 @@ class XiaoDuLight(LightEntity):
 
         # 最基础的只有开和关 没有模式 色温 亮度控制
         if 'mode' not in detail['stateSetting'] and 'brightness' not in detail['stateSetting'] and 'colorTemperatureInKelvin' not in detail['stateSetting']:
+            self._attr_supported_color_modes = {ColorMode.ONOFF}
+            self._attr_color_mode = ColorMode.ONOFF
+            self.pColorMode = ColorMode.ONOFF
+        if self.pColorMode is None:
             self._attr_supported_color_modes = {ColorMode.ONOFF}
             self._attr_color_mode = ColorMode.ONOFF
             self.pColorMode = ColorMode.ONOFF

@@ -21,6 +21,8 @@ async def async_setup_entry(hass: core.HomeAssistant, config_entry, async_add_en
         if not A.is_climate(applianceTypes):
             continue
         detail = await aapi.get_detail()
+        if detail == []:
+            continue
         name = detail['appliance']['friendlyName']
         if_onS = str(detail['appliance']['stateSetting']['turnOnState']['value']).lower()
         if if_onS == "on":

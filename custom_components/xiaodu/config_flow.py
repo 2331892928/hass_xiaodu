@@ -1,6 +1,10 @@
 import logging
+from typing import Any
+
 import voluptuous as vol
 from homeassistant import config_entries
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import callback
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers import config_validation as cv
 from .const import DOMAIN, CONF_BAIDUID_COOKIE
@@ -14,6 +18,14 @@ class XiaoduConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self.cookie = None
         self._home_id_list = None
         self.home_id = None
+
+    @staticmethod
+    @callback
+    def async_get_options_flow(
+            config_entry: ConfigEntry,
+    ):
+        """Create the options flow."""
+        return OptionsFlowHandler(config_entry)
 
     async def async_step_user(self, user_input=None):
         # logging.info("进入主页面")
@@ -79,7 +91,6 @@ class XiaoduConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             session = async_get_clientsession(self.hass)
             xiaoduApi = XiaoDuAPI(cookie=self.cookie, session=session)
             detail = await xiaoduApi.get_details(self.home_id, applianceIds)
-            _LOGGER.info(detail)
             applianceTypes = detail['appliances']
             return self.async_create_entry(
                 title=f"XiaoDu：{home_name}",
@@ -94,3 +105,62 @@ class XiaoduConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             }
         )
         return self.async_show_form(step_id="device", data_schema=data_schema)
+
+
+class OptionsFlowHandler(config_entries.OptionsFlow):
+    def __init__(self, config_entry: config_entries.ConfigEntry):
+        pass
+
+    async def async_step_init(self, user_input=None):
+        """Manage the options."""
+        if user_input is not None:
+            return await self.async_step_user()
+
+        return self.async_show_form(
+            step_id="user",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(CONF_BAIDUID_COOKIE): str,
+                }
+            ),
+            description_placeholders={
+                "BAIDU_COOKIE_hint": "app login BAIDU_COOKIE",
+            },
+            errors={},
+        )
+
+    async def async_step_user(self, user_input=None):
+        form = self.async_show_form(
+            step_id="user",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(CONF_BAIDUID_COOKIE): str,
+                }
+            ),
+            description_placeholders={
+                "BAIDU_COOKIE_hint": "app login BAIDU_COOKIE",
+            },
+            errors={},
+        )
+
+        if user_input is not None:
+            self.cookie = user_input["BAIDUID_COOKIE"]
+            session = async_get_clientsession(self.hass)
+            xiaoduApi = XiaoDuAPI(self.cookie, session)
+            loginFlag = await xiaoduApi.checkSession()
+            _LOGGER.info("校验结果: %s", loginFlag)
+            if not loginFlag[0]:
+                form['errors']['base'] = loginFlag[1]
+                return form
+            self._home_id_list = await xiaoduApi.get_home_id_list()
+            nData = {**self.config_entry.data}
+            for i, k in enumerate(nData['devices']):
+                nData['devices'][i]['cookie'] = self.cookie
+            self.hass.config_entries.async_update_entry(
+                self.config_entry, data=nData
+            )
+            return self.async_create_entry(
+                title=self.config_entry.title,
+                data=nData
+            )
+        return form
