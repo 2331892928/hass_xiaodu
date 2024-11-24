@@ -6,7 +6,7 @@ class ApplianceTypes:
         return ['LIGHT']
 
     def SWITCH(self):
-        return ['SOCKET', 'WASHING_MACHINE', 'SWITCH']
+        return ['SOCKET', 'WASHING_MACHINE', 'SWITCH', 'HEATER']
 
     def COVER(self):
         return ['CURTAIN']
