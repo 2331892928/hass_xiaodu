@@ -1,4 +1,5 @@
 import json
+import random
 
 from homeassistant import core
 from homeassistant.components.switch import SwitchEntity
@@ -43,15 +44,13 @@ async def async_setup_entry(hass: core.HomeAssistant, config_entry, async_add_en
                 # 更新的时候传状态
                 if_on = False
                 for i, p in enumerate(panel['actions']):
-                    if 'payload' in p[i]:
+                    if 'payload' in p:
                         payload = json.dumps(p['payload'])
                     if i == 0:
-                        headerNameOn = p[i]['headerName']
+                        headerNameOn = p['headerName']
                     if i == 1:
-                        headerNameOff = p[i]['headerName']
-                entities.append(
-                    XiaoduSwitch(api[device_id], name + "_" + switchName, if_on, group_name, bot_name, TypeStr,
-                                 TypeValue, headerNameOn, headerNameOff, payload))
+                        headerNameOff = p['headerName']
+                entities.append(XiaoduSwitch(api[device_id], name + "_" + switchName, if_on, group_name, bot_name, TypeStr, TypeValue, headerNameOn, headerNameOff, payload))
         else:
             if_onS = str(detail['appliance']['stateSetting']['turnOnState']['value']).lower()
             if if_onS == "on":
@@ -63,10 +62,13 @@ async def async_setup_entry(hass: core.HomeAssistant, config_entry, async_add_en
 
 
 class XiaoduSwitch(SwitchEntity):
-    def __init__(self, api: XiaoDuAPI, name: str, if_on: bool, groupName: str, botName: str, switchType: str = "switch",
-                 typeValue: str = None, headerNameOn: str = None, headerNameOff: str = None, payloadObject: str = None):
+    def __init__(self, api: XiaoDuAPI, name: str, if_on: bool, groupName: str, botName: str, switchType: str = "switch", typeValue: str = None, headerNameOn: str = None, headerNameOff: str = None, payloadObject: str = None):
         self._api = api
-        self._attr_unique_id = f"{api.applianceId}_switch"
+        #  重复实体的 uid 会重复 来一个独一无二的
+        if switchType != "switch":
+            self._attr_unique_id = f"{api.applianceId}_switch_{switchType}_{typeValue}"
+        else:
+            self._attr_unique_id = f"{api.applianceId}_switch"
         self._is_on = if_on
         # self._attr_is_on = if_on
         self._name = name
@@ -80,6 +82,7 @@ class XiaoduSwitch(SwitchEntity):
             self._attr_icon = "mdi:toggle-switch-variant"
         else:
             self._attr_icon = "mdi:toggle-switch-variant-off"
+
 
     @property
     def device_info(self):
@@ -100,6 +103,8 @@ class XiaoduSwitch(SwitchEntity):
     async def async_turn_on(self):
         if self.switchType == "switch":
             flag = await self._api.switch_on()
+        else:
+            flag = await self._api.switch_panel_on(self.switchType, self.typeValue, self.headerNameOn, self.headerNameOff, self.payloadObject)
         self._is_on = True
         self._attr_icon = "mdi:toggle-switch-variant"
         # await self.async_update()
@@ -108,6 +113,8 @@ class XiaoduSwitch(SwitchEntity):
     async def async_turn_off(self):
         if self.switchType == "switch":
             flag = await self._api.switch_off()
+        else:
+            flag = await self._api.switch_panel_off(self.switchType, self.typeValue, self.headerNameOn, self.headerNameOff, self.payloadObject)
         self._is_on = False
         self._attr_icon = "mdi:toggle-switch-variant-off"
         # await self.async_update()
@@ -118,8 +125,7 @@ class XiaoduSwitch(SwitchEntity):
             self._is_on = await self._api.switch_status()
         else:
             # 单个
-            self._is_on = await self._api.switch_panel_status(self.switchType, self.typeValue, self.headerNameOn,
-                                                              self.headerNameOff, self.payloadObject)
+            self._is_on = await self._api.switch_panel_status(self.switchType, self.typeValue, self.headerNameOn, self.headerNameOff, self.payloadObject)
 
     async def async_added_to_hass(self):
         await self.async_update()

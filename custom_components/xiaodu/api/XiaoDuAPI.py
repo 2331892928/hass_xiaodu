@@ -1,3 +1,5 @@
+import json
+
 import aiohttp
 
 HOST = 'https://xiaodu.baidu.com'
@@ -302,6 +304,143 @@ class XiaoDuAPI:
             return False
         else:
             return True
+
+    async def switch_panel_off(self, switchType, typeValue, headerNameOn, headerNameOff, payloadObject):
+        if payloadObject is not None:
+            payload = json.loads("""
+                            {
+                                %s,
+                                "applianceId": %s,
+                                "parameters": {
+                                    "attribute": %s,
+                                    "attributeValue": %s,
+                                    "proxyConnectStatus": false
+                                },
+                                "appliance": {
+                                    "applianceId": [
+                                        %s
+                                    ]
+                                },
+                                %s: {
+                                    "value": %s
+                                }
+                            }
+                            """ % (
+            payloadObject[1:-1], '"' + self.applianceId + '"', '"' + switchType + '"', '"' + typeValue + '"',
+            '"' + self.applianceId + '"', '"' + switchType + '"', '"' + typeValue + '"'))
+        else:
+            payload = json.loads("""
+                            {
+                                "applianceId": %s,
+                                "parameters": {
+                                    "attribute": %s,
+                                    "attributeValue": %s,
+                                    "proxyConnectStatus": false
+                                },
+                                "appliance": {
+                                    "applianceId": [
+                                        %s
+                                    ]
+                                },
+                                %s: {
+                                    "value": %s
+                                }
+                            }
+                            """ % ('"' + self.applianceId + '"', '"' + switchType + '"', '"' + typeValue + '"',
+            '"' + self.applianceId + '"', '"' + switchType + '"', '"' + typeValue + '"'))
+        submit = {
+            "header": {
+                "namespace": "DuerOS.ConnectedHome.Control",
+                "name": headerNameOff,
+                "payloadVersion": 3
+            },
+            "payload": payload
+        }
+        flag = await self.send_command(submit)
+        return flag[0]
+
+    async def switch_panel_on(self, switchType, typeValue, headerNameOn, headerNameOff, payloadObject):
+        if payloadObject is not None:
+            payload = json.loads("""
+                            {
+                                %s,
+                                "applianceId": %s,
+                                "parameters": {
+                                    "attribute": %s,
+                                    "attributeValue": %s,
+                                    "proxyConnectStatus": false
+                                },
+                                "appliance": {
+                                    "applianceId": [
+                                        %s
+                                    ]
+                                },
+                                %s: {
+                                    "value": %s
+                                }
+                            }
+                            """ % (
+            payloadObject[1:-1], '"' + self.applianceId + '"', '"' + switchType + '"', '"' + typeValue + '"',
+            '"' + self.applianceId + '"', '"' + switchType + '"', '"' + typeValue + '"'))
+        else:
+            payload = json.loads("""
+                            {
+                                "applianceId": %s,
+                                "parameters": {
+                                    "attribute": %s,
+                                    "attributeValue": %s,
+                                    "proxyConnectStatus": false
+                                },
+                                "appliance": {
+                                    "applianceId": [
+                                        %s
+                                    ]
+                                },
+                                %s: {
+                                    "value": %s
+                                }
+                            }
+                            """ % ('"' + self.applianceId + '"', '"' + switchType + '"', '"' + typeValue + '"',
+            '"' + self.applianceId + '"', '"' + switchType + '"', '"' + typeValue + '"'))
+        submit = {
+            "header": {
+                "namespace": "DuerOS.ConnectedHome.Control",
+                "name": headerNameOn,
+                "payloadVersion": 3
+            },
+            "payload": payload
+        }
+        flag = await self.send_command(submit)
+        return flag[0]
+
+    async def button_panel(self, switchType, typeValue, headerName):
+        payload = json.loads("""
+                        {
+                            "applianceId": %s,
+                            "parameters": {
+                                "attribute": %s,
+                                "proxyConnectStatus": false
+                            },
+                            "appliance": {
+                                "applianceId": [
+                                    %s
+                                ]
+                            },
+                            %s: {}
+                        }
+                        """ % ('"' + self.applianceId + '"', '"' + switchType + '"',
+        '"' + self.applianceId + '"', '"' + switchType + '"'))
+        submit = {
+            "header": {
+                "namespace": "DuerOS.ConnectedHome.Control",
+                "name": headerName,
+                "payloadVersion": 3
+            },
+            "payload": payload
+        }
+        flag = await self.send_command(submit)
+        return flag[0]
+
 
     async def send_command(self, submit: dict):
         api = "/saiya/smarthome/directivesend?from=h5_control"
