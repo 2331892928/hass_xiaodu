@@ -6,13 +6,16 @@ class ApplianceTypes:
         return ['LIGHT']
 
     def SWITCH(self):
-        return ['SOCKET', 'WASHING_MACHINE', 'SWITCH', 'HEATER', 'AIR_FRESHER', 'WINDOW_OPENER']
+        return ['SOCKET', 'WASHING_MACHINE', 'SWITCH', 'HEATER', 'AIR_FRESHER', 'WINDOW_OPENER', 'CLOTHES_RACK']
 
     def COVER(self):
         return ['CURTAIN']
 
     def CLIMATE(self):
         return ['AIR_CONDITION']
+
+    def BUTTON(self):
+        return ['CLOTHES_RACK']
 
     def is_switch(self, applianceTypes):
         A = ApplianceTypes()
@@ -45,3 +48,12 @@ class ApplianceTypes:
             if i in switch:
                 return True
         return False
+
+    def is_button(self, applianceTypes):
+        A = ApplianceTypes()
+        switch = A.BUTTON()
+        for i in applianceTypes:
+            if i in switch:
+                return True
+        return False
+

@@ -279,6 +279,30 @@ class XiaoDuAPI:
             device_dict[i['applianceId']] = i['friendlyName']
         return device_dict
 
+    async def switch_panel_status(self, switchType, typeValue, headerNameOn, headerNameOff, payloadObject):
+        """
+        自定义 panel
+        :param switchType:
+        :param typeValue:
+        :param headerNameOn:
+        :param headerNameOff:
+        :param payloadObject:
+        :return:
+        """
+        detail = await self.get_detail()
+        # 万一获取失败
+        if 'appliance' not in detail:
+            return False
+        appliance = detail['appliance']
+        stateSetting = appliance['stateSetting']
+        # 可能厂家软件设备状态还没同步过来，需要在小度控制以下才可同步
+        if switchType not in stateSetting:
+            return False
+        if stateSetting[switchType]['value'] != typeValue:
+            return False
+        else:
+            return True
+
     async def send_command(self, submit: dict):
         api = "/saiya/smarthome/directivesend?from=h5_control"
         try:

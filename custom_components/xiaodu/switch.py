@@ -1,3 +1,5 @@
+import json
+
 from homeassistant import core
 from homeassistant.components.switch import SwitchEntity
 from . import XiaoDuAPI, ApplianceTypes
@@ -21,30 +23,63 @@ async def async_setup_entry(hass: core.HomeAssistant, config_entry, async_add_en
         if detail == []:
             continue
         name = detail['appliance']['friendlyName']
-        if_onS = str(detail['appliance']['stateSetting']['turnOnState']['value']).lower()
-        if if_onS == "on":
-            if_on = True
-        else:
-            if_on = False
         group_name = detail['appliance']['groupName']
         bot_name = detail['appliance']['botName']
-        entities.append(XiaoduSwitch(api[device_id], name, if_on, group_name, bot_name))
+        # 如果是晾衣架 需要 多模式 所以需要重复注册实体
+        if 'CLOTHES_RACK' in detail['appliance']['applianceTypes']:
+            # 0是 上下 1是功能 确保兼容 还是遍历一下
+            panels = []
+            for i, p in enumerate(detail['appliance']['panels']):
+                if p['title'] == "功能控制":
+                    panels = detail['appliance']['panels'][i]['list']
+                    break
+            for panel in panels:
+                payload = None
+                headerNameOn = None
+                headerNameOff = None
+                TypeStr = panel['name']
+                TypeValue = panel['value']
+                switchName = panel['label']
+                # 更新的时候传状态
+                if_on = False
+                for i, p in enumerate(panel['actions']):
+                    if 'payload' in p[i]:
+                        payload = json.dumps(p['payload'])
+                    if i == 0:
+                        headerNameOn = p[i]['headerName']
+                    if i == 1:
+                        headerNameOff = p[i]['headerName']
+                entities.append(
+                    XiaoduSwitch(api[device_id], name + "_" + switchName, if_on, group_name, bot_name, TypeStr,
+                                 TypeValue, headerNameOn, headerNameOff, payload))
+        else:
+            if_onS = str(detail['appliance']['stateSetting']['turnOnState']['value']).lower()
+            if if_onS == "on":
+                if_on = True
+            else:
+                if_on = False
+            entities.append(XiaoduSwitch(api[device_id], name, if_on, group_name, bot_name))
     async_add_entities(entities, True)
 
 
 class XiaoduSwitch(SwitchEntity):
-    def __init__(self, api: XiaoDuAPI, name: str, if_on: bool, groupName: str, botName: str):
+    def __init__(self, api: XiaoDuAPI, name: str, if_on: bool, groupName: str, botName: str, switchType: str = "switch",
+                 typeValue: str = None, headerNameOn: str = None, headerNameOff: str = None, payloadObject: str = None):
         self._api = api
         self._attr_unique_id = f"{api.applianceId}_switch"
         self._is_on = if_on
         # self._attr_is_on = if_on
         self._name = name
         self._group_name = botName
+        self.switchType = switchType
+        self.typeValue = typeValue
+        self.headerNameOn = headerNameOn
+        self.headerNameOff = headerNameOff
+        self.payloadObject = payloadObject
         if if_on:
             self._attr_icon = "mdi:toggle-switch-variant"
         else:
             self._attr_icon = "mdi:toggle-switch-variant-off"
-
 
     @property
     def device_info(self):
@@ -63,21 +98,28 @@ class XiaoduSwitch(SwitchEntity):
         return self._is_on
 
     async def async_turn_on(self):
-        flag = await self._api.switch_on()
+        if self.switchType == "switch":
+            flag = await self._api.switch_on()
         self._is_on = True
         self._attr_icon = "mdi:toggle-switch-variant"
         # await self.async_update()
         self.async_schedule_update_ha_state(True)
 
     async def async_turn_off(self):
-        flag = await self._api.switch_off()
+        if self.switchType == "switch":
+            flag = await self._api.switch_off()
         self._is_on = False
         self._attr_icon = "mdi:toggle-switch-variant-off"
         # await self.async_update()
         self.async_schedule_update_ha_state(True)
 
     async def async_update(self):
-        self._is_on = await self._api.switch_status()
+        if self.switchType == "switch":
+            self._is_on = await self._api.switch_status()
+        else:
+            # 单个
+            self._is_on = await self._api.switch_panel_status(self.switchType, self.typeValue, self.headerNameOn,
+                                                              self.headerNameOff, self.payloadObject)
 
     async def async_added_to_hass(self):
         await self.async_update()
