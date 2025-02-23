@@ -17,6 +17,9 @@ class ApplianceTypes:
     def BUTTON(self):
         return ['CLOTHES_RACK']
 
+    def LOCK(self):
+        return ['DOOR_LOCK']
+
     def is_switch(self, applianceTypes):
         A = ApplianceTypes()
         switch = A.SWITCH()
@@ -52,6 +55,14 @@ class ApplianceTypes:
     def is_button(self, applianceTypes):
         A = ApplianceTypes()
         switch = A.BUTTON()
+        for i in applianceTypes:
+            if i in switch:
+                return True
+        return False
+
+    def is_lock(self, applianceTypes):
+        A = ApplianceTypes()
+        switch = A.LOCK()
         for i in applianceTypes:
             if i in switch:
                 return True

@@ -20,44 +20,51 @@ async def async_setup_entry(hass: core.HomeAssistant, config_entry, async_add_en
         applianceTypes = aapi.applianceTypes
         if not A.is_switch(applianceTypes):
             continue
-        detail = await aapi.get_detail()
-        if detail == []:
-            continue
-        name = detail['appliance']['friendlyName']
-        group_name = detail['appliance']['groupName']
-        bot_name = detail['appliance']['botName']
-        # 如果是晾衣架 需要 多模式 所以需要重复注册实体
-        if 'CLOTHES_RACK' in detail['appliance']['applianceTypes']:
-            # 0是 上下 1是功能 确保兼容 还是遍历一下
-            panels = []
-            for i, p in enumerate(detail['appliance']['panels']):
-                if p['title'] == "功能控制":
-                    panels = detail['appliance']['panels'][i]['list']
-                    break
-            for panel in panels:
-                payload = None
-                headerNameOn = None
-                headerNameOff = None
-                TypeStr = panel['name']
-                TypeValue = panel['value']
-                switchName = panel['label']
-                # 更新的时候传状态
-                if_on = False
-                for i, p in enumerate(panel['actions']):
-                    if 'payload' in p:
-                        payload = json.dumps(p['payload'])
-                    if i == 0:
-                        headerNameOn = p['headerName']
-                    if i == 1:
-                        headerNameOff = p['headerName']
-                entities.append(XiaoduSwitch(api[device_id], name + "_" + switchName, if_on, group_name, bot_name, TypeStr, TypeValue, headerNameOn, headerNameOff, payload))
-        else:
-            if_onS = str(detail['appliance']['stateSetting']['turnOnState']['value']).lower()
-            if if_onS == "on":
-                if_on = True
+        # 防止某些不是switch设备冒充switch设备，导致所有的switch设备注册失败，此bug由wx用户：rocky** 若** 提供
+        try:
+            detail = await aapi.get_detail()
+            if detail == []:
+                continue
+            name = detail['appliance']['friendlyName']
+            group_name = detail['appliance']['groupName']
+            bot_name = detail['appliance']['botName']
+            # 如果是晾衣架 需要 多模式 所以需要重复注册实体
+            if 'CLOTHES_RACK' in detail['appliance']['applianceTypes']:
+                # 0是 上下 1是功能 确保兼容 还是遍历一下
+                panels = []
+                for i, p in enumerate(detail['appliance']['panels']):
+                    if p['title'] == "功能控制":
+                        panels = detail['appliance']['panels'][i]['list']
+                        break
+                for panel in panels:
+                    payload = None
+                    headerNameOn = None
+                    headerNameOff = None
+                    TypeStr = panel['name']
+                    TypeValue = panel['value']
+                    switchName = panel['label']
+                    # 更新的时候传状态
+                    if_on = False
+                    for i, p in enumerate(panel['actions']):
+                        if 'payload' in p:
+                            payload = json.dumps(p['payload'])
+                        if i == 0:
+                            headerNameOn = p['headerName']
+                        if i == 1:
+                            headerNameOff = p['headerName']
+                    entities.append(
+                        XiaoduSwitch(api[device_id], name + "_" + switchName, if_on, group_name, bot_name, TypeStr,
+                                     TypeValue, headerNameOn, headerNameOff, payload))
             else:
-                if_on = False
-            entities.append(XiaoduSwitch(api[device_id], name, if_on, group_name, bot_name))
+                if_onS = str(detail['appliance']['stateSetting']['turnOnState']['value']).lower()
+                if if_onS == "on":
+                    if_on = True
+                else:
+                    if_on = False
+                entities.append(XiaoduSwitch(api[device_id], name, if_on, group_name, bot_name))
+        except Exception as e:
+            _LOGGER.error(e)
+            continue
     async_add_entities(entities, True)
 
 
