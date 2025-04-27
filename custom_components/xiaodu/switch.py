@@ -1,3 +1,4 @@
+import asyncio
 import json
 import random
 
@@ -69,7 +70,8 @@ async def async_setup_entry(hass: core.HomeAssistant, config_entry, async_add_en
 
 
 class XiaoduSwitch(SwitchEntity):
-    def __init__(self, api: XiaoDuAPI, name: str, if_on: bool, groupName: str, botName: str, switchType: str = "switch", typeValue: str = None, headerNameOn: str = None, headerNameOff: str = None, payloadObject: str = None):
+    def __init__(self, api: XiaoDuAPI, name: str, if_on: bool, groupName: str, botName: str, switchType: str = "switch",
+                 typeValue: str = None, headerNameOn: str = None, headerNameOff: str = None, payloadObject: str = None):
         self._api = api
         #  重复实体的 uid 会重复 来一个独一无二的
         if switchType != "switch":
@@ -89,7 +91,6 @@ class XiaoduSwitch(SwitchEntity):
             self._attr_icon = "mdi:toggle-switch-variant"
         else:
             self._attr_icon = "mdi:toggle-switch-variant-off"
-
 
     @property
     def device_info(self):
@@ -111,7 +112,8 @@ class XiaoduSwitch(SwitchEntity):
         if self.switchType == "switch":
             flag = await self._api.switch_on()
         else:
-            flag = await self._api.switch_panel_on(self.switchType, self.typeValue, self.headerNameOn, self.headerNameOff, self.payloadObject)
+            flag = await self._api.switch_panel_on(self.switchType, self.typeValue, self.headerNameOn,
+                                                   self.headerNameOff, self.payloadObject)
         self._is_on = True
         self._attr_icon = "mdi:toggle-switch-variant"
         # await self.async_update()
@@ -121,18 +123,24 @@ class XiaoduSwitch(SwitchEntity):
         if self.switchType == "switch":
             flag = await self._api.switch_off()
         else:
-            flag = await self._api.switch_panel_off(self.switchType, self.typeValue, self.headerNameOn, self.headerNameOff, self.payloadObject)
+            flag = await self._api.switch_panel_off(self.switchType, self.typeValue, self.headerNameOn,
+                                                    self.headerNameOff, self.payloadObject)
         self._is_on = False
         self._attr_icon = "mdi:toggle-switch-variant-off"
         # await self.async_update()
         self.async_schedule_update_ha_state(True)
 
     async def async_update(self):
+        await asyncio.sleep(1)
+        await asyncio.create_task(self.amen_update())
+
+    async def amen_update(self):
         if self.switchType == "switch":
             self._is_on = await self._api.switch_status()
         else:
             # 单个
-            self._is_on = await self._api.switch_panel_status(self.switchType, self.typeValue, self.headerNameOn, self.headerNameOff, self.payloadObject)
+            self._is_on = await self._api.switch_panel_status(self.switchType, self.typeValue, self.headerNameOn,
+                                                              self.headerNameOff, self.payloadObject)
 
     async def async_added_to_hass(self):
         await self.async_update()

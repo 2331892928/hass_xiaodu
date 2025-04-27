@@ -1,3 +1,4 @@
+import asyncio
 import logging
 
 from homeassistant import core
@@ -81,7 +82,8 @@ class XiaoDuLight(LightEntity):
             self._attr_effect_list = effect_list
 
         # 最基础的只有开和关 没有模式 色温 亮度控制
-        if 'mode' not in detail['stateSetting'] and 'brightness' not in detail['stateSetting'] and 'colorTemperatureInKelvin' not in detail['stateSetting']:
+        if 'mode' not in detail['stateSetting'] and 'brightness' not in detail[
+            'stateSetting'] and 'colorTemperatureInKelvin' not in detail['stateSetting']:
             self._attr_supported_color_modes = {ColorMode.ONOFF}
             self._attr_color_mode = ColorMode.ONOFF
             self.pColorMode = ColorMode.ONOFF
@@ -142,6 +144,10 @@ class XiaoDuLight(LightEntity):
             self.async_schedule_update_ha_state(True)
 
     async def async_update(self):
+        await asyncio.sleep(1)
+        await asyncio.create_task(self.amen_update())
+
+    async def amen_update(self):
         # self._is_on = await self._api.switch_status()
         detail = await self._api.get_detail()
         detail = detail['appliance']
@@ -151,7 +157,8 @@ class XiaoDuLight(LightEntity):
         else:
             turnOnState = False
         self._attr_is_on = turnOnState
-        self.effectList = detail['stateSetting']['mode']['valueRangeMap']
+        if 'mode' in detail['stateSetting']:
+            self.effectList = detail['stateSetting']['mode']['valueRangeMap']
         if self.pColorMode == ColorMode.BRIGHTNESS:
             # 更新亮度
             brightness = detail['stateSetting']['brightness']['value']
@@ -164,8 +171,10 @@ class XiaoDuLight(LightEntity):
             # 更新色温和色温范围 得到的色温是比例
             colorTemperatureInKelvin = detail['stateSetting']['colorTemperatureInKelvin']['value']
             # 换算色温比例
-            colorTemperatureInKelvinMin = detail['stateSetting']['colorTemperatureInKelvin']['valueKelvinRangeMap']['min']
-            colorTemperatureInKelvinMax = detail['stateSetting']['colorTemperatureInKelvin']['valueKelvinRangeMap']['max']
+            colorTemperatureInKelvinMin = detail['stateSetting']['colorTemperatureInKelvin']['valueKelvinRangeMap'][
+                'min']
+            colorTemperatureInKelvinMax = detail['stateSetting']['colorTemperatureInKelvin']['valueKelvinRangeMap'][
+                'max']
             self._attr_min_color_temp_kelvin = colorTemperatureInKelvinMin
             self._attr_min_mireds = colorTemperatureInKelvinMin
             self._attr_max_color_temp_kelvin = colorTemperatureInKelvinMax
